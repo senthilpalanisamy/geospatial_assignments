@@ -14,6 +14,8 @@ def add_min_max_longitude(in_csv, out_csv):
     #size of chunks of data to write to the csv
     chunksize = 1
 
+    error_margin = 0.001
+
     #start looping through data writing it to a new file for each chunk
     for i in range(1,number_lines,chunksize):
         df = pd.read_csv(in_csv,
@@ -48,10 +50,10 @@ def add_min_max_longitude(in_csv, out_csv):
         if min_longitude == float('inf') or max_longitude == float('-inf') or\
            min_latitude == float('inf') or max_longitude == float('-inf'):
                continue
-        df.insert(17, 'min_latitude', min_latitude)
-        df.insert(18, 'max_latitude', max_latitude)
-        df.insert(19, 'min_longtitude', min_longitude)
-        df.insert(20, 'max_longitude', max_longitude)
+        df.insert(17, 'min_latitude', min_latitude - error_margin)
+        df.insert(18, 'max_latitude', max_latitude + error_margin)
+        df.insert(19, 'min_longtitude', min_longitude - error_margin)
+        df.insert(20, 'max_longitude', max_longitude + error_margin)
 
         df.to_csv(out_csv,
              index=False,
