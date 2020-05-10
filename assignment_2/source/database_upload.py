@@ -27,18 +27,19 @@ class databaseReader:
     print(rows)
     return rows
 
-  def insert_slope_data(self, linkrecord, newslope):
+  def insert_slope_data(self, linkrecord, newslope, sublink_index):
 
     print('link_record $$$$$$$$$$$$')
     print(linkrecord)
-    # linkPVID = linkrecord[self.PVID_INDEX]
-    linkPVID = linkrecord
+    linkPVID = linkrecord[self.PVID_INDEX]
+    # linkPVID = linkrecord
     print('linkPVID')
     print(linkPVID)
-    if(linkrecord):
-      slope_string = str(linkrecord) + ',' + str(newslope)
+    new_slope_string = str(sublink_index) + ':' + str(newslope)
+    if(linkrecord[self.SLOPE_INDEX]):
+      slope_string = linkrecord[self.SLOPE_INDEX] + ',' + new_slope_string 
     else:
-      slope_string = str(newslope)
+      slope_string = new_slope_string
     query = " UPDATE link_data SET slope = '%s' WHERE linkPVID=%d;"%(slope_string, int(linkPVID))
 
     self.cur.execute(query)
@@ -135,16 +136,39 @@ def map_match_line_interpolated(links, probe):
         max_index = all_sublink_probs.index(max(all_sublink_probs))
         sub_link_indices.append(max_index)
         all_link_probs.append(all_sublink_probs[max_index])
+        previous_pt = current_pt
     matched_link_index = all_link_probs.index(max(all_link_probs))
     sublink_index = sub_link_indices[matched_link_index]
     closest_link = links[matched_link_index]
  
     return closest_link, sublink_index
 
-def calculate_slope(probe_data, previous_probe_data):
+def calculate_slope(probe_data, prev_probe_data):
     # calculate the slope of the point with probe data
+    # calculate the slope of the point with probe data
+    # We define slope by the change in altitude between probe points divided by
+    # the change in distance (sqrt(X**2 + Y**2)
+    probe_lat = probe_data[2]
+    probe_lon = probe_data[3]
+    probe_alt = probe_data[4]
+    probe_utm_e, probe_utm_n,_,_ = utm.from_latlon(float(probe_lat), float(probe_lon))
 
-    return 4.5
+    prev_probe_lat = prev_probe_data[2]
+    prev_probe_lon = prev_probe_data[3]
+    prev_probe_alt = prev_probe_data[4]
+    prev_probe_utm_e, prev_probe_utm_n,_,_ = utm.from_latlon(float(prev_probe_lat), float(prev_probe_lon))
+
+    x_y_dist_change = ((probe_utm_e - prev_probe_utm_e)**2 + (probe_utm_n - prev_probe_utm_n)**2)**(0.5)
+    alt_change = probe_alt - prev_probe_alt
+
+    slope = alt_change / x_y_dist_change
+
+    print('slope(((((((((((((((((())))))))))))))))))')
+    print(slope)
+
+    return slope
+
+
 
 def analyse_probedata(probe_csv_path, op_csv_path):
     linkdatabase = databaseReader('roadlink_4.db')
@@ -176,7 +200,7 @@ def analyse_probedata(probe_csv_path, op_csv_path):
         if previous_probe_point[0] == probe_data_formatted[0] and\
            previous_link_match == matched_link:
           slope_value = calculate_slope(probe_data_formatted, previous_probe_point)
-          linkdatabase.insert_slope_data(matched_link, slope_value)
+          linkdatabase.insert_slope_data(matched_link, slope_value, sublink_index)
 
         # Update map matching data
         direction = 'T'
@@ -185,7 +209,7 @@ def analyse_probedata(probe_csv_path, op_csv_path):
 
         print('matched_link')
         print(matched_link)
-        probe_data.insert(8, 'linkPVID', matched_link)
+        probe_data.insert(8, 'linkPVID', matched_link[0])
         probe_data.insert(9, 'direction', direction)
         probe_data.insert(10, 'distFromRef', reference_node_distance)
         probe_data.insert(11, 'distFromLink', distance_from_link)
