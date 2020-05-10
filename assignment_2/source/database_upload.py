@@ -23,24 +23,25 @@ class databaseReader:
 
     self.cur.execute(query)
     rows = self.cur.fetchall()
-    print("rows: ")
-    print(rows)
+    #print("rows: ")
+    #print(rows)
     return rows
 
   def insert_slope_data(self, linkrecord, newslope, sublink_index):
 
-    print('link_record $$$$$$$$$$$$')
-    print(linkrecord)
+    #print('link_record $$$$$$$$$$$$')
+    #print(linkrecord)
     linkPVID = linkrecord[self.PVID_INDEX]
     # linkPVID = linkrecord
-    print('linkPVID')
-    print(linkPVID)
+    #print('linkPVID')
+    #print(linkPVID)
     new_slope_string = str(sublink_index) + ':' + str(newslope)
     if(linkrecord[self.SLOPE_INDEX]):
       slope_string = linkrecord[self.SLOPE_INDEX] + ',' + new_slope_string 
     else:
       slope_string = new_slope_string
     query = " UPDATE link_data SET slope = '%s' WHERE linkPVID=%d;"%(slope_string, int(linkPVID))
+    #print('insrted', slope_string)
 
     self.cur.execute(query)
     self.con.commit()
@@ -59,16 +60,16 @@ def map_match(links, probe):
 
     closest_link = 0;
     for link in links:
-        print('link^^^^')
-        print(link[14])
+        #print('link^^^^')
+        #print(link[14])
         node_list = []
         node_list.append(link[14].split('|'))
         node_list = node_list[0]
-        print('node_list %%%%')
-        print(node_list)
+        #print('node_list %%%%')
+        #print(node_list)
         for node in node_list:
-            print('node!!!!!!')
-            print(node)
+            #print('node!!!!!!')
+            #print(node)
             node_info = []
             node_info = node.split('/')
             # convert to cartesian cord
@@ -119,7 +120,8 @@ def map_match_line_interpolated(links, probe):
             vx2, vy2 = current_pt
             t = ((vx1 - px) * (vx2 - vx1) + (vy1 - py) * (vy2 - vy1)) / ((vx2-vx1)**2 + (vy2-vy1)**2)
             if (0 <= t <= 1):
-                dst = abs((vx2-vx1)*(vy1-py) - (vy2-vy1) * (vx1-px)) / (math.sqrt(vx2-vx1) + (vy2-vy1)**2)
+                #print()
+                dst = abs((vx2-vx1)*(vy1-py) - (vy2-vy1) * (vx1-px)) / math.sqrt((vx2-vx1)**2 + (vy2-vy1)**2)
             else:
                 d1 = math.sqrt((vx1-px)**2 + (vy1-py)**2)
                 d2 = math.sqrt((vx2-px)**2 + (vy2-py)**2)
@@ -163,8 +165,8 @@ def calculate_slope(probe_data, prev_probe_data):
 
     slope = alt_change / x_y_dist_change
 
-    print('slope(((((((((((((((((())))))))))))))))))')
-    print(slope)
+    #print('slope(((((((((((((((((())))))))))))))))))')
+    #print(slope)
 
     return slope
 
@@ -189,42 +191,43 @@ def analyse_probedata(probe_csv_path, op_csv_path):
         heading = float(probe_data[7].values[0])
         probe_data_formatted = [sampleID, dateTime, latitude, longitude, altitude,
                                speed, heading]
-        print(probe_data)
+        #print(probe_data)
 
         # Primitive filtering of link data
         relevant_links = linkdatabase.filter_matching_links(latitude, longitude)
 
         # core function
         # matched_link = map_match(relevant_links, probe_data_formatted)
-        matched_link, sublink_index = map_match_line_interpolated(relevant_links, probe_data_formatted)
-        if previous_probe_point[0] == probe_data_formatted[0] and\
-           previous_link_match == matched_link:
-          slope_value = calculate_slope(probe_data_formatted, previous_probe_point)
-          linkdatabase.insert_slope_data(matched_link, slope_value, sublink_index)
+        if relevant_links:
+          matched_link, sublink_index = map_match_line_interpolated(relevant_links, probe_data_formatted)
+          if previous_probe_point[0] == probe_data_formatted[0] and\
+             previous_link_match == matched_link:
+            slope_value = calculate_slope(probe_data_formatted, previous_probe_point)
+            linkdatabase.insert_slope_data(matched_link, slope_value, sublink_index)
 
-        # Update map matching data
-        direction = 'T'
-        reference_node_distance = 10
-        distance_from_link = 11
+          # Update map matching data
+          direction = 'T'
+          reference_node_distance = 10
+          distance_from_link = 11
 
-        print('matched_link')
-        print(matched_link)
-        probe_data.insert(8, 'linkPVID', matched_link[0])
-        probe_data.insert(9, 'direction', direction)
-        probe_data.insert(10, 'distFromRef', reference_node_distance)
-        probe_data.insert(11, 'distFromLink', distance_from_link)
+          #print('matched_link')
+          #print(matched_link)
+          probe_data.insert(8, 'linkPVID', matched_link[0])
+          probe_data.insert(9, 'direction', direction)
+          probe_data.insert(10, 'distFromRef', reference_node_distance)
+          probe_data.insert(11, 'distFromLink', distance_from_link)
 
-        # Write results back to a csv file
+          # Write results back to a csv file
 
-        probe_data.to_csv(op_csv_path,
-             index=False,
-             header=False,
-             mode='a',#append data to csv file
-             chunksize=1)
+          probe_data.to_csv(op_csv_path,
+               index=False,
+               header=False,
+               mode='a',#append data to csv file
+               chunksize=1)
 
 
-        previous_probe_point = probe_data_formatted
-        previous_link_match = matched_link
+          previous_probe_point = probe_data_formatted
+          previous_link_match = matched_link
 
         # Write slope values back to db
 
