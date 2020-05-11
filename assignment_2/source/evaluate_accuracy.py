@@ -1,6 +1,7 @@
 import pandas as pd
-import utm
 import math
+
+import utm
 
 def evaluate_results(csv_path):
     link_iterator =  pd.read_csv(csv_path, sep=',', chunksize=1)
@@ -11,7 +12,10 @@ def evaluate_results(csv_path):
 
     for link_data in link_iterator:
         slope = link_data.slope.values[0]
-        slope = '0:2.5, 1:4.7, 0:6.7'
+        # slope = '0:2.5, 1:4.7, 0:6.7'
+        if(type(slope) != type('aa')):
+            continue
+
         slope_list  = slope.split(',')
 
         gt_slope  = link_data.slopeInfo.values[0]
@@ -42,18 +46,34 @@ def evaluate_results(csv_path):
         divide_sum = 0
         weighted_slope = 0
 
+        data_count = 0
+
+
         for slope_value in slope_list:
             sub_link_idx, slope_value = slope_value.split(':')
             sub_link_idx = int(sub_link_idx)
             slope_value = float(slope_value)
+            # Again very crappy code and software architecture. I let the 
+            # system run into zero / zero error during slope calculation.
+            # Couldn't cut it down in the middle and change it since more than
+            # few ten thousands of data poitns were already processed. This
+            # is just a short circuit to eliminate that faulty dat
+            if(math.isnan(slope_value)):
+                continue
             divide_sum += distances[sub_link_idx]
             weighted_slope += distances[sub_link_idx] * slope_value
+            data_count += 1
+        if(data_count == 0):
+            continue
         weighted_slope = weighted_slope / divide_sum
 
         gt_slope = gt_slope.split('|')
         gt_divide_sum = 0
         gt_weighted_slope = 0
         previous_distance = 0
+
+        if not gt_slope:
+            continue
 
         for slope_value in gt_slope:
             distance, slope = slope_value.split('/')
@@ -65,8 +85,9 @@ def evaluate_results(csv_path):
             previous_distance = distance
         gt_weighted_slope = gt_weighted_slope / gt_divide_sum
         average_error = (average_error * N + (gt_weighted_slope - weighted_slope) ** 2)/ (N+1) 
+        #print(gt_weighted_slope, weighted_slope, average_error)
         N = N+1
-        if N % 1000 == 0:
+        if N % 200== 0:
             print('current accuracy:', math.sqrt(average_error))
 
 
