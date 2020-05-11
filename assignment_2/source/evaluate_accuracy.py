@@ -63,7 +63,8 @@ def evaluate_results(csv_path):
             divide_sum += distances[sub_link_idx]
             weighted_slope += distances[sub_link_idx] * slope_value
             data_count += 1
-        if(data_count == 0):
+
+        if(data_count == 0 or divide_sum == 0):
             continue
         weighted_slope = weighted_slope / divide_sum
 
@@ -83,6 +84,9 @@ def evaluate_results(csv_path):
             gt_weighted_slope += segment_length * slope 
             gt_divide_sum += segment_length
             previous_distance = distance
+
+        if gt_divide_sum == 0:
+            continue
         gt_weighted_slope = gt_weighted_slope / gt_divide_sum
         average_error = (average_error * N + (gt_weighted_slope - weighted_slope) ** 2)/ (N+1) 
         #print(gt_weighted_slope, weighted_slope, average_error)
