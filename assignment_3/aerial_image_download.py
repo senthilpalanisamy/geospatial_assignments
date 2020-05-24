@@ -54,9 +54,8 @@ def download_image(location_coordinates, tileSystem_level, null_image):
           break
 
     if(not success_status):
-      download_image(location_coordinates, tileSystem_level-1, null_image)
-    else:
-      return  final_image
+      final_image = download_image(location_coordinates, tileSystem_level-1, null_image)
+    return  final_image
 
 def retrieve_aerial_image(coodinates, op_path, image_name):
 
