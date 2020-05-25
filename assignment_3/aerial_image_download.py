@@ -1,6 +1,6 @@
 from urllib import request
 import requests
-from tilesystem import TileSystem
+from tile_system import TileSystem
 from PIL import Image
 import os
 import numpy as np
@@ -8,15 +8,26 @@ import numpy as np
 import cv2
 
 
-TILESIZE = 256              
+TILESIZE = 256
 
+
+EarthRadius = 6378137;
+MinLat = -85.05112878;
+MaxLat = 85.05112878;
+MinLong = -180;
+MaxLong = 180;
+
+EARTHRADIUS = 6378137
+MINLAT, MAXLAT = -85.05112878, 85.05112878
+MINLON, MAXLON = -180., 180.
+MaxLevel = 23
 
 def download_image(location_coordinates, tileSystem_level, null_image):
     min_latitude, max_latitude, min_longitude, max_longitude = location_coordinates
-    x1, y1 = TileSystem.latlong_to_pixelXY(min_latitude, min_longitude, tileSystem_level)
-    x2, y2 = TileSystem.latlong_to_pixelXY(max_latitude, max_longitude, tileSystem_level)
-    X1, Y1 = TileSystem.pixelXY_to_tileXY(min(x1,x2), min(y1,y2))
-    X2, Y2 = TileSystem.pixelXY_to_tileXY(max(x1,x2), max(y1,y2))
+    x1, y1 = TileSystem.LatLong_To_PixelXY(min_latitude, min_longitude, tileSystem_level)
+    x2, y2 = TileSystem.LatLong_To_PixelXY(max_latitude, max_longitude, tileSystem_level)
+    X1, Y1 = TileSystem.PixelXY_To_TileXY(min(x1,x2), min(y1,y2))
+    X2, Y2 = TileSystem.PixelXY_To_TileXY(max(x1,x2), max(y1,y2))
     success_status = True
 
     mapurl = "http://h0.ortho.tiles.virtualearth.net/tiles/h{0}.jpeg?g=131"
@@ -28,7 +39,7 @@ def download_image(location_coordinates, tileSystem_level, null_image):
 
     for Y in range(Y1, Y2+1):
       for X in range(X1, X2 +1):
-        quadkey = TileSystem.tileXY_to_quadkey(X, Y, tileSystem_level)
+        quadkey = TileSystem.TileXY_To_QuadKey(X, Y, tileSystem_level)
         resp = requests.get(mapurl.format(quadkey), stream=True).raw
         image = np.asarray(bytearray(resp.read()), dtype="uint8")
         image = cv2.imdecode(image, cv2.IMREAD_COLOR)
@@ -65,13 +76,13 @@ def retrieve_aerial_image(coodinates, op_path, image_name):
   null_image = np.asarray(bytearray(resp.read()), dtype="uint8")
   null_image = cv2.imdecode(null_image, cv2.IMREAD_COLOR)
 
-  original_image, tile_size = download_image(coodinates, TileSystem.MAXLEVEL, null_image)
+  original_image, tile_size = download_image(coodinates, TileSystem.MaxLevel, null_image)
   cv2.imwrite(os.path.join(op_path, image_name+'_original_'+'level'+str(tile_size)+'.png'), original_image)
 
   resized_image = cv2.resize(original_image, (2000, 2000))
   cv2.imwrite(os.path.join(op_path, image_name+'_resized'+'level'+str(tile_size)+'.png'), resized_image)
 
-      
+
 if __name__=='__main__':
 
   # Northwestern 42.052597, -87.680291, 42.061201, -87.669271
@@ -79,13 +90,10 @@ if __name__=='__main__':
   # max_lat = 42.061201
   # min_lon = -87.680291
   # max_lon = -87.669271
-     
+
   min_lat = 40.428509
   max_lat = 40.438538
   min_lon = 116.561515
   max_lon = 116.579476
   coodinates = [min_lat, max_lat, min_lon, max_lon]
   retrieve_aerial_image(coodinates, op_path='./', image_name='nu_campus')
-
-
-
