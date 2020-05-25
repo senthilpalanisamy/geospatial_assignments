@@ -69,6 +69,8 @@ def overlay_ways(coorindates, aerial_image_path):
   cv2.imwrite("final_result_resized.png", aerial_resized)
 
 if __name__=='__main__':
+  # last few character before .png should contain a number indicating the 
+  # the tile level of the map. In this case, the tile level is 19
   image_path = './nu_campus_original_19.png'
   # min_lat = 42.049457
   # max_lat = 42.062380
