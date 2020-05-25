@@ -8,7 +8,6 @@ import numpy as np
 import cv2
 
 
-MAPMAXSIZE = 8192 * 8192 * 8 
 TILESIZE = 256              
 
 
@@ -54,8 +53,8 @@ def download_image(location_coordinates, tileSystem_level, null_image):
           break
 
     if(not success_status):
-      final_image = download_image(location_coordinates, tileSystem_level-1, null_image)
-    return  final_image
+      final_image, tileSystem_level = download_image(location_coordinates, tileSystem_level-1, null_image)
+    return  final_image, tileSystem_level
 
 def retrieve_aerial_image(coodinates, op_path, image_name):
 
@@ -66,20 +65,25 @@ def retrieve_aerial_image(coodinates, op_path, image_name):
   null_image = np.asarray(bytearray(resp.read()), dtype="uint8")
   null_image = cv2.imdecode(null_image, cv2.IMREAD_COLOR)
 
-  original_image = download_image(coodinates, TileSystem.MAXLEVEL, null_image)
-  cv2.imwrite(os.path.join(op_path, image_name+'_original.png'), original_image)
+  original_image, tile_size = download_image(coodinates, TileSystem.MAXLEVEL, null_image)
+  cv2.imwrite(os.path.join(op_path, image_name+'_original_'+'level'+str(tile_size)+'.png'), original_image)
 
   resized_image = cv2.resize(original_image, (2000, 2000))
-  cv2.imwrite(os.path.join(op_path, image_name+'_resized.png'), resized_image)
+  cv2.imwrite(os.path.join(op_path, image_name+'_resized'+'level'+str(tile_size)+'.png'), resized_image)
 
       
 if __name__=='__main__':
 
   # Northwestern 42.052597, -87.680291, 42.061201, -87.669271
-  min_lat = 42.052597
-  max_lat = 42.061201
-  min_lon = -87.680291
-  max_lon = -87.669271
+  # min_lat = 42.052597
+  # max_lat = 42.061201
+  # min_lon = -87.680291
+  # max_lon = -87.669271
+     
+  min_lat = 40.428509
+  max_lat = 40.438538
+  min_lon = 116.561515
+  max_lon = 116.579476
   coodinates = [min_lat, max_lat, min_lon, max_lon]
   retrieve_aerial_image(coodinates, op_path='./', image_name='nu_campus')
 

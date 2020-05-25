@@ -68,10 +68,15 @@ def overlay_ways(coorindates, aerial_image_path):
   cv2.imwrite("final_result_resized.png", aerial_resized)
 
 if __name__=='__main__':
-  image_path = '/home/senthilpalanisamy/work/courses/495_geospatial_vision/geospatial_assignments/assignment_3/nu_campus_original_level20.png'
-  min_lat = 42.049457   
-  max_lat = 42.062380
-  min_lon = -87.681498
-  max_lon = -87.668744
+  image_path = '/home/senthilpalanisamy/work/courses/495_geospatial_vision/geospatial_assignments/assignment_3/nu_campus_original_level19.png'
+  # min_lat = 42.049457   
+  # max_lat = 42.062380
+  # min_lon = -87.681498
+  # max_lon = -87.668744
+
+  min_lat = 40.428509
+  max_lat = 40.438538
+  min_lon = 116.561515
+  max_lon = 116.579476
   coordinates = [min_lat, max_lat, min_lon, max_lon]
   overlay_ways(coordinates, image_path)
