@@ -34,9 +34,26 @@ def ENUtoCameraCoordinates(e,n,u, camera_parameters):
     x,y,z = answer
     return x,y,z
 
-def CameraCoordinatestoImageCoorinates(x, y, z, Rs=2048):
+def CameraCoordinatestoImageCoorinatesFront(x, y, z, Rs=2048):
     xi = y / z * (Rs - 1)/ 2.0 + (Rs + 1) /2
     yi = x / z  * (Rs - 1)/ 2.0 + (Rs + 1) / 2
+    return xi, yi
+
+def CameraCoordinatestoImageCoorinatesBack(x, y, z, Rs=2048):
+    xi = - y / z * (Rs - 1)/ 2.0 + (Rs + 1) /2
+    yi = - x / z  * (Rs - 1)/ 2.0 + (Rs + 1) / 2
+
+
+    return xi, yi
+
+def CameraCoordinatestoImageCoorinatesLeft(x, y, z, Rs=2048):
+    xi = - y / x * (Rs - 1)/ 2.0 + (Rs + 1) /2
+    yi =  - z / x  * (Rs - 1)/ 2.0 + (Rs + 1) / 2
+    return xi, yi
+
+def CameraCoordinatestoImageCoorinatesRight(x, y, z, Rs=2048):
+    xi = y / x * (Rs - 1)/ 2.0 + (Rs + 1) /2
+    yi =   -z / x  * (Rs - 1)/ 2.0 + (Rs + 1) / 2
     return xi, yi
 
 def unit_test():
@@ -61,11 +78,11 @@ def unit_test():
 
 if __name__=='__main__':
     unit_test()
-    Rs = 2048
-    front_image = np.zeros((Rs, Rs))
-    left_image = np.zeros((Rs, Rs))
-    right_image = np.zeros((Rs, Rs))
-    back_image = np.zeros((Rs, Rs))
+    Rs = 4000
+    front_image = np.zeros((Rs, Rs), dtype = np.uint8)
+    left_image = np.zeros((Rs, Rs), dtype = np.uint8)
+    right_image = np.zeros((Rs, Rs), dtype = np.uint8)
+    back_image = np.zeros((Rs, Rs), dtype = np.uint8)
     camera_params_file_path = '/home/senthilpalanisamy/Downloads/final_project_data (2)/image/camera.config'
     with open(camera_params_file_path, 'r') as camera_params_file:
         _ = camera_params_file.readline()
@@ -84,29 +101,56 @@ if __name__=='__main__':
           X, Y, Z = LLAtoECEF(*point[:3])
           e, n, u = ECEFtoENU(X, Y, Z, camera_params)
           x, y, z =ENUtoCameraCoordinates(e, n, u, camera_params)
-          xi, yi = CameraCoordinatestoImageCoorinates(x, y, z, Rs)
-          xi, yi = int(xi), int(yi)
 
-          if(xi >= Rs or yi >= Rs or xi <0 or yi <0):
-              print('skipped')
-              continue
 
-          if(z > -x and z > x):
+
+
+          #if(z > abs(y)):
+          if(z > 0 and z > abs(x) and z > abs(y)):
+          #if(z > -x and z > x):
+              xi, yi = CameraCoordinatestoImageCoorinatesFront(x, y, z, Rs)
+              xi, yi = int(xi), int(yi)
+
               front_image[yi, xi] = intensity
-          elif(z < -x and z > x):
-              left_image[yi, xi] = intensity
-          elif(z<x and z < -x):
-              back_image[yi, xi] = intensity
-          elif(z > -x and z < x):
-              right_image[yi, xi] = intensity
-          count+= 1
-          print(count)
 
+          if(x < 0 and x < -abs(z) and x < -abs(y)):
+          #elif(z < -x and z > x):
+              xi, yi = CameraCoordinatestoImageCoorinatesLeft(x, y, z, Rs)
+              xi, yi = int(xi), int(yi)
+
+              left_image[yi, xi] = intensity
+
+          if(z < 0 and z < -abs(x) and z < -abs(y)):
+          #elif(z<x and z < -x):
+              xi, yi = CameraCoordinatestoImageCoorinatesBack(x, y, z, Rs)
+              xi, yi = int(xi), int(yi)
+
+              back_image[yi, xi] = intensity
+
+          if(x > 0 and x > abs(y) and x > abs(z)):
+          #elif(z > -x and z < x):
+              xi, yi = CameraCoordinatestoImageCoorinatesRight(x, y, z, Rs)
+              xi, yi = int(xi), int(yi)
+
+              right_image[yi, xi] = intensity
+
+    front_image = cv2.equalizeHist(front_image) 
+    back_image = cv2.equalizeHist(back_image) 
+    left_image = cv2.equalizeHist(left_image) 
+    right_image = cv2.equalizeHist(right_image) 
+ 
+ 
     cv2.imshow('front', front_image)
     cv2.imshow('back', back_image)
     cv2.imshow('left', left_image)
     cv2.imshow('right', right_image)
     cv2.waitKey(0)
+
+
+    cv2.imwrite('front_image.jpg', front_image)
+    cv2.imwrite('back_image.jpg', back_image)
+    cv2.imwrite('left_image.jpg', left_image)
+    cv2.imwrite('right_image.jpg', right_image)
 
 
 
