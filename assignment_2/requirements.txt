@@ -247,7 +247,7 @@ systemd-python==234
 tables==3.6.1
 tabulate==0.8.7
 tensorboard==1.14.0
-tensorflow==1.14.0
+tensorflow==2.5.0
 tensorflow-estimator==1.14.0
 tensorpack==0.10.1
 termcolor==1.1.0
